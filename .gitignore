@@ -1,0 +1,9 @@
+/.env
+/code.ipynb
+/docker-compose.yml
+/Dockerfile
+/documents
+/entrypoint.sh
+/ollama
+/test_ui.py
+/__pycache__
