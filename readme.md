@@ -14,7 +14,8 @@ Additionally, a web-based UI has been developed using [Streamlit](https://stream
     `ollama pull nomic-embed-text`
 
 3. Activate the virtual environment.
-4. Set up the Tavily Search API key.
+4. Set up the [Tavily](https://app.tavily.com/home) API key.  
+    `TAVILY_API_KEY='<your-api-key>'`
 5. Install dependencies:  
     `pip install -r requirements.txt`
 
