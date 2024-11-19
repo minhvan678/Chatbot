@@ -13,8 +13,9 @@ Additionally, a web-based UI has been developed using [Streamlit](https://stream
     `ollama pull llama3.2:1b`  
     `ollama pull nomic-embed-text`
 
-3. Activate the virtual environment
-4. Install dependencies:  
+3. Activate the virtual environment.
+4. Set up the Tavily Search API key.
+5. Install dependencies:  
     `pip install -r requirements.txt`
 
 ## Running the Project

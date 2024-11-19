@@ -1,17 +1,16 @@
 import streamlit as st
-from langchain_ollama import OllamaEmbeddings
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import START, StateGraph
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, AIMessageChunk
 from langchain_core.documents import Document
 from langgraph.graph.message import add_messages
 from typing_extensions import Annotated, TypedDict
 from typing import List, Sequence
-from langchain.chains import create_history_aware_retriever, create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain.chains import create_history_aware_retriever
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 
 web_search_tool = TavilySearchResults()
 
@@ -59,7 +58,7 @@ class Chatbot:
     def __init__(self, db, llm):
         self.db = db
         self.llm = llm
-        self.chain = qa_prompt | llm | StrOutputParser()
+        self.chain = qa_prompt | llm.with_config(callbacks=[StreamingStdOutCallbackHandler]) | StrOutputParser()
         self.retriever = db.as_retriever(search_type="similarity_score_threshold",search_kwargs={'score_threshold': 0.5, 'k': 2})
 
     ### Nodes
@@ -179,15 +178,14 @@ def stream_output_to_streamlit(question: str, app, config):
     # Create a placeholder for the output
     output_placeholder = st.empty()
     response = ""  # Initialize an empty response to store the streamed chunks
-    
     inputs = {"question": question}
 
     # Stream the output chunks to the Streamlit UI
     for chunk, metadata in app.stream(inputs, config=config, stream_mode="messages"):
-        if isinstance(chunk, AIMessage):  # Check if the chunk is an AI message
+        if isinstance(chunk, AIMessageChunk) and metadata["langgraph_node"] == "generate" :  # Check if the chunk is an AI message
             # Append the content to the response
             response += chunk.content
             # Update the Streamlit placeholder with the latest output
             output_placeholder.markdown(response)
-    
+
     return response

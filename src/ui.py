@@ -1,11 +1,13 @@
 from app import Chatbot, stream_output_to_streamlit
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PDFPlumberLoader
 from langchain_community.vectorstores import Chroma
 from langchain_ollama import OllamaEmbeddings
 from langchain_ollama import ChatOllama
 import streamlit as st
 import os
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 
+TEXT_SPLITTER = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
 st.session_state["llm"] = ChatOllama(model="llama3.2:1b", base_url=OLLAMA_URL)
 
@@ -31,20 +33,31 @@ if load_button:
         if len(uploaded_files) <= 3:
             st.sidebar.success(f"{len(uploaded_files)} PDF(s) uploaded successfully!")
             
-            documents = []  # To store the parsed documents
+            raw_documents = []  # To store the parsed documents
             temp_file_paths = []  # To keep track of the temporary file paths for deletion
             
-            for uploaded_file in uploaded_files:
-                # Temporarily save the uploaded file
-                temp_file_path = os.path.join("./", uploaded_file.name)
-                with open(temp_file_path, "wb") as f:
-                    f.write(uploaded_file.read())
-                
-                temp_file_paths.append(temp_file_path)  # Add the file path to the list
+            # Create the progress bar
+            progress_bar = st.progress(0)
+            with st.spinner(
+                    "Loading file..."
+                ):
+                for idx, uploaded_file in enumerate(uploaded_files):
+                    # Temporarily save the uploaded file
+                    temp_file_path = os.path.join("./", uploaded_file.name)
+                    with open(temp_file_path, "wb") as f:
+                        f.write(uploaded_file.read())
+                    
+                    temp_file_paths.append(temp_file_path)  # Add the file path to the list
 
-                # Load the PDF content using PyPDFLoader
-                loader = PyPDFLoader(temp_file_path)
-                documents.extend(loader.load())  # Extend the list with loaded documents
+                    # Load the PDF content using PyPDFLoader
+                    loader = PDFPlumberLoader(temp_file_path, extract_images=True)
+                    raw_documents.extend(loader.load())  # Extend the list with loaded documents
+
+                    # Update the progress bar after each iteration
+                    progress = (idx + 1) / len(uploaded_files)  # Calculate progress as a fraction
+                    progress_bar.progress(progress)  # Update the progress bar
+
+                documents = TEXT_SPLITTER.split_documents(raw_documents)
 
             with st.spinner(
                     "Creating embeddings and loading documents into Chroma..."
@@ -84,5 +97,6 @@ if prompt := st.chat_input("Question"):
     with st.chat_message("user"):
         st.markdown(prompt)
     with st.chat_message("assistant"):
+        print("111")
         response = stream_output_to_streamlit(prompt, st.session_state["app"], st.session_state["config"])
         st.session_state.messages.append({"role": "assistant", "content": response})
