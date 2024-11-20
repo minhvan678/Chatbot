@@ -52,12 +52,6 @@ qa_prompt = ChatPromptTemplate.from_messages(
     ]
 )
 
-class Websearch(BaseModel):
-    """Determines if web search is necessary """
-
-    binary_score: str = Field(
-        description="Output only 'Y' or 'N'"
-    )
 
 ### Statefully manage chat history ###
 class GraphState(TypedDict):
@@ -72,7 +66,7 @@ class Chatbot:
         self.llm = llm
         self.chain = qa_prompt | llm.with_config(callbacks=[StreamingStdOutCallbackHandler]) | StrOutputParser()
         self.retriever = db.as_retriever(search_type="similarity_score_threshold",search_kwargs={'score_threshold': 0.5, 'k': 2})
-        self.web_search_decision = web_search_decision_prompt | llm.with_structured_output(Websearch)
+        self.web_search_decision = web_search_decision_prompt | llm
     ### Nodes
     def retrieve(self, state):
         """
