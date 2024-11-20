@@ -9,7 +9,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 TEXT_SPLITTER = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
-st.session_state["llm"] = ChatOllama(model="llama3.2:1b", base_url=OLLAMA_URL)
+st.session_state["llm"] = ChatOllama(model="llama3.2:1b", base_url=OLLAMA_URL, temperature=0)
 
 st.title("Chatbot with LLM and RAG 🤖")
 

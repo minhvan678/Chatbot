@@ -1,8 +1,10 @@
 import streamlit as st
+from langchain import hub
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import START, StateGraph
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, AIMessageChunk
 from langchain_core.documents import Document
+from langchain_core.runnables import RunnableBranch
 from langgraph.graph.message import add_messages
 from typing_extensions import Annotated, TypedDict
 from typing import List, Sequence
@@ -11,11 +13,13 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
 load_dotenv()
 web_search_tool = TavilySearchResults()
 
+web_search_decision_prompt = hub.pull("john-chatly/web_search_necessity_classifier")
 
 contextualize_q_system_prompt = (
     "Given a chat history and the latest user question "
@@ -35,7 +39,7 @@ contextualize_q_prompt = ChatPromptTemplate.from_messages(
 ### Answer question ###
 system_prompt = (
     "You are an assistant for question-answering tasks. "
-    "Use the following pieces of retrieved context to answer the question. If you don't know the answer, say that you don't know."
+    "Use the following pieces of retrieved context and chat history to answer the question. If you don't know the answer, say that you don't know."
     "Use three sentences maximum and keep the answer concise."
     "\n\n"
     "{context}"
@@ -48,6 +52,12 @@ qa_prompt = ChatPromptTemplate.from_messages(
     ]
 )
 
+class Websearch(BaseModel):
+    """Determines if web search is necessary """
+
+    binary_score: str = Field(
+        description="Output only 'Y' or 'N'"
+    )
 
 ### Statefully manage chat history ###
 class GraphState(TypedDict):
@@ -62,7 +72,7 @@ class Chatbot:
         self.llm = llm
         self.chain = qa_prompt | llm.with_config(callbacks=[StreamingStdOutCallbackHandler]) | StrOutputParser()
         self.retriever = db.as_retriever(search_type="similarity_score_threshold",search_kwargs={'score_threshold': 0.5, 'k': 2})
-
+        self.web_search_decision = web_search_decision_prompt | llm.with_structured_output(Websearch)
     ### Nodes
     def retrieve(self, state):
         """
@@ -74,13 +84,14 @@ class Chatbot:
         Returns:
             state (dict): New key added to state, documents, that contains retrieved documents
         """
+
         question = state["question"]
         chat_history = state["chat_history"]
-
+        
         history_aware_retriever = create_history_aware_retriever(
             self.llm, self.retriever, contextualize_q_prompt
         )
-        
+
         # Retrieval
         documents = history_aware_retriever.invoke({"input": question, "chat_history": chat_history})
         return {"documents": documents, "question": question}
@@ -96,6 +107,7 @@ class Chatbot:
         Returns:
             state (dict): Updates documents key with appended web results
         """
+
         question = state["question"]
 
         # Web search
@@ -115,6 +127,7 @@ class Chatbot:
         Returns:
             state (dict): New key added to state, answer, that contains LLM generation
         """
+
         question = state["question"]
         documents = state["documents"]
         chat_history = state["chat_history"]
@@ -135,10 +148,20 @@ class Chatbot:
         Returns:
             str: Next node to call
         """
+
         documents = state["documents"]
+        question = state["question"]
         if not documents:
-            return "web_search"
+            decision = self.web_search_decision.invoke({"input": question}).binary_score
+
+            if decision=='N':
+                ("---ROUTE QUESTION TO GENERATE---")
+                return "generate"
+            else:
+
+                return "web_search"
         else:
+
             return "vectorstore"
 
     def create_app(self):
@@ -158,6 +181,7 @@ class Chatbot:
             {
                 "web_search": "web_search",
                 "vectorstore": "generate",
+                "generate": "generate"
             },
         )
 
