@@ -36,42 +36,38 @@ if load_button:
             raw_documents = []  # To store the parsed documents
             temp_file_paths = []  # To keep track of the temporary file paths for deletion
             
-            # Create the progress bar
-            progress_bar = st.progress(0)
-            with st.spinner(
-                    "Loading file..."
+            if "db" not in st.session_state:
+                with st.spinner(
+                        "Loading file..."
                 ):
-                for idx, uploaded_file in enumerate(uploaded_files):
-                    # Temporarily save the uploaded file
-                    temp_file_path = os.path.join("./", uploaded_file.name)
-                    with open(temp_file_path, "wb") as f:
-                        f.write(uploaded_file.read())
-                    
-                    temp_file_paths.append(temp_file_path)  # Add the file path to the list
+                    for uploaded_file in uploaded_files:
+                        # Temporarily save the uploaded file
+                        temp_file_path = os.path.join("./", uploaded_file.name)
+                        with open(temp_file_path, "wb") as f:
+                            f.write(uploaded_file.read())
+                        
+                        temp_file_paths.append(temp_file_path)  # Add the file path to the list
 
-                    # Load the PDF content using PyPDFLoader
-                    loader = PDFPlumberLoader(temp_file_path, extract_images=True)
-                    raw_documents.extend(loader.load())  # Extend the list with loaded documents
+                        # Load the PDF content using PyPDFLoader
+                        loader = PDFPlumberLoader(temp_file_path, extract_images=True)
+                        raw_documents.extend(loader.load())  # Extend the list with loaded documents
 
-                    # Update the progress bar after each iteration
-                    progress = (idx + 1) / len(uploaded_files)  # Calculate progress as a fraction
-                    progress_bar.progress(progress)  # Update the progress bar
+                    documents = TEXT_SPLITTER.split_documents(raw_documents)
 
-                documents = TEXT_SPLITTER.split_documents(raw_documents)
-
-            with st.spinner(
-                    "Creating embeddings and loading documents into Chroma..."
+        
+                with st.spinner(
+                        "Creating embeddings and loading documents into Chroma..."
                 ):
-            # Store documents in Chroma database
-                st.session_state["db"] = Chroma.from_documents(
-                    documents,
-                    OllamaEmbeddings(model="nomic-embed-text"),
-                )
+                # Store documents in Chroma database
+                    st.session_state["db"] = Chroma.from_documents(
+                        documents,
+                        OllamaEmbeddings(model="nomic-embed-text"),
+                    )
 
-                st.session_state["app"] = Chatbot(db=st.session_state["db"], llm=st.session_state["llm"]).create_app()
-                st.session_state["config"] = {"configurable": {"thread_id": "abc123"}}
-            
-            st.info("All set to answer questions!")
+                    st.session_state["app"] = Chatbot(db=st.session_state["db"], llm=st.session_state["llm"]).create_app()
+                    st.session_state["config"] = {"configurable": {"thread_id": "abc123"}}
+
+                st.info("All set to answer questions!")
             
             # Delete the temporary files after loading
             for temp_file_path in temp_file_paths:
@@ -97,6 +93,5 @@ if prompt := st.chat_input("Question"):
     with st.chat_message("user"):
         st.markdown(prompt)
     with st.chat_message("assistant"):
-        print("111")
         response = stream_output_to_streamlit(prompt, st.session_state["app"], st.session_state["config"])
         st.session_state.messages.append({"role": "assistant", "content": response})
