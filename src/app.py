@@ -72,7 +72,6 @@ class Chatbot:
         Returns:
             state (dict): New key added to state, documents, that contains retrieved documents
         """
-        print("---RETRIEVE---")
         question = state["question"]
         chat_history = state["chat_history"]
 
@@ -95,8 +94,6 @@ class Chatbot:
         Returns:
             state (dict): Updates documents key with appended web results
         """
-
-        print("---WEB SEARCH---")
         question = state["question"]
 
         # Web search
@@ -116,7 +113,6 @@ class Chatbot:
         Returns:
             state (dict): New key added to state, answer, that contains LLM generation
         """
-        print("---GENERATE---")
         question = state["question"]
         documents = state["documents"]
         chat_history = state["chat_history"]
@@ -137,14 +133,10 @@ class Chatbot:
         Returns:
             str: Next node to call
         """
-
-        print("---ROUTE QUESTION---")
         documents = state["documents"]
         if not documents:
-            print("--web_search--")
             return "web_search"
         else:
-            print("--vectorstore--")
             return "vectorstore"
 
     def create_app(self):
