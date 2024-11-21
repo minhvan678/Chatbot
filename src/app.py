@@ -4,7 +4,6 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import START, StateGraph
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, AIMessageChunk
 from langchain_core.documents import Document
-from langchain_core.runnables import RunnableBranch
 from langgraph.graph.message import add_messages
 from typing_extensions import Annotated, TypedDict
 from typing import List, Sequence
@@ -12,8 +11,6 @@ from langchain.chains import create_history_aware_retriever
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_community.tools.tavily_search import TavilySearchResults
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -64,7 +61,7 @@ class Chatbot:
     def __init__(self, db, llm):
         self.db = db
         self.llm = llm
-        self.chain = qa_prompt | llm.with_config(callbacks=[StreamingStdOutCallbackHandler]) | StrOutputParser()
+        self.chain = qa_prompt | llm | StrOutputParser()
         self.retriever = db.as_retriever(search_type="similarity_score_threshold",search_kwargs={'score_threshold': 0.5, 'k': 2})
         self.web_search_decision = web_search_decision_prompt | llm
     ### Nodes

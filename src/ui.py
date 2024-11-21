@@ -6,6 +6,11 @@ from langchain_ollama import ChatOllama
 import streamlit as st
 import os
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+import logging
+
+# Suppress warnings as logs
+logging.basicConfig(level=logging.ERROR)
+
 
 TEXT_SPLITTER = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
