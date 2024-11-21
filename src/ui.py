@@ -30,7 +30,7 @@ with st.sidebar:
     )
     
     # Button to load PDFs
-    load_button = st.button("Index Documents", key="load_pdfs")
+    load_button = st.button("Index Documents", key="load_pdfs", type='primary')
 
 # Process PDFs and store them in Chroma when the button is clicked
 if load_button:
