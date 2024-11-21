@@ -146,7 +146,7 @@ class Chatbot:
         documents = state["documents"]
         question = state["question"]
         if not documents:
-            decision = self.web_search_decision.invoke({"input": question}).binary_score
+            decision = self.web_search_decision.invoke({"input": question}).content
 
             if decision=='N':
                 ("---ROUTE QUESTION TO GENERATE---")
