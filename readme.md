@@ -3,9 +3,7 @@ This is an experimental project that utilizes a local Large Language Model ([Lla
 
 Additionally, a web-based UI has been developed using [Streamlit](https://streamlit.io/) to offer an alternative and user-friendly interface for interacting with the chatbot.
 
-<p align="center">
-    <img src="images/ui.png" alt="Screenshot of Streamlit web UI" width="600">
-</p>
+https://github.com/user-attachments/assets/41203cd1-39b3-4e07-944b-0d0a631fed1f
 
 ## Requirements
 - [Ollama](https://ollama.com/download)  v0.4.2 or higher.
