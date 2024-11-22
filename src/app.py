@@ -62,7 +62,7 @@ class Chatbot:
         self.db = db
         self.llm = llm
         self.chain = qa_prompt | llm | StrOutputParser()
-        self.retriever = db.as_retriever(search_type="similarity_score_threshold",search_kwargs={'score_threshold': 0.5, 'k': 2})
+        self.retriever = db.as_retriever(search_type="similarity_score_threshold",search_kwargs={'score_threshold': 0.4, 'k': 5})
         self.web_search_decision = web_search_decision_prompt | llm
     ### Nodes
     def retrieve(self, state):

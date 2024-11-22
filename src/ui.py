@@ -1,5 +1,5 @@
 from app import Chatbot, stream_output_to_streamlit
-from langchain_community.document_loaders import PDFPlumberLoader
+from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import Chroma
 from langchain_ollama import OllamaEmbeddings
 from langchain_ollama import ChatOllama
@@ -54,7 +54,7 @@ if load_button:
                         temp_file_paths.append(temp_file_path)  # Add the file path to the list
 
                         # Load the PDF content using PyPDFLoader
-                        loader = PDFPlumberLoader(temp_file_path, extract_images=True)
+                        loader = PyPDFLoader(temp_file_path, extract_images=True)
                         raw_documents.extend(loader.load())  # Extend the list with loaded documents
 
                     documents = TEXT_SPLITTER.split_documents(raw_documents)
