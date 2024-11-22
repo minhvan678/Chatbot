@@ -7,6 +7,10 @@ Additionally, a web-based UI has been developed using [Streamlit](https://stream
     <img src="images/ui.png" alt="Screenshot of Streamlit web UI" width="600">
 </p>
 
+
+https://github.com/user-attachments/assets/41203cd1-39b3-4e07-944b-0d0a631fed1f
+
+
 ## Requirements
 - [Ollama](https://ollama.com/download)  v0.4.2 or higher.
 - **Python** 3.11.10 or higher.
